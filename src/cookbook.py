@@ -154,34 +154,22 @@ def getRecipeByName(cursor, recipeName):
   else:
     return {}
 
-def getRecipeByNameWithMessage(recipeName):
-  ''' Gets a recipe from the cookbook given the recipe name.
-      Returns True if recipe was found, else False.
-      Returns the recipe as a dict if found, else and empty dict.
-      Returns a message describing what has happened.
-  '''
-  recipe = getRecipeByName(recipeName)
-  if recipe:
-    return (True, recipe, "Successfully retrieved " + recipeName + " from the cookbook.")
-  else:
-    return (False, {}, "No recipe with name: " + recipeName + ".")
-
 @connection_needed
 def getAllRecipes(cursor):
   ''' Gets all the recipe in the cookbook.
       Returns True if at least one recipe was found, else False
-      Returns a dict containing all recipe (This is empty is none was found)
+      Returns an array containing all recipes (This is empty is none was found)
       Returns a message describing what has happened
   '''
   cursor.execute("SELECT * FROM recipes")
   result = cursor.fetchall()
   if len(result):
-    recipes = {'recipes': []}
+    recipes = []
     for recipe in result:
-      recipes['recipes'].append(getRecipeByName(recipe[1]))
+      recipes.append(getRecipeByName(recipe[1]))
     return (True, recipes, "Successfully retrieved all recipes.")
   else:
-    return(False, {}, "There are no recipes in the cookbook.")
+    return(False, [], "There are no recipes in the cookbook.")
 
 def editRecipe(oldRecipeName, newRecipe):
   ''' Overwrites all the information in a recipe given the recipe name

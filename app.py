@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-import cookbook
+from src import cookbook
 from functools import wraps
 from flask_cors import CORS
 
@@ -28,21 +28,28 @@ def authentication_required(f):
       return create_response({}, 401, "Authentication needed")
   return authenticate
 
-@app.route('/')
-@app.route('/recipes', methods=['GET'])
-def getRecipeByName():
+@app.route('/', methods=['GET'])
+def getAllData():
   success = False
-  result = {}
+  data = {}
   message = ""
-  if 'name' in request.args:
-    recipeName = request.args['name']
-    (success, result, message) = cookbook.getRecipeByNameWithMessage(recipeName)
-  else:
-    (success, result, message) = cookbook.getAllRecipes()
+  (success, recipes, message) = cookbook.getAllRecipes()
   if success:
-    return create_response(result, 200, message)
+    data['recipes'] = recipes
+    return create_response(data, 200, message)
   else:
-    return create_response(result, 404, message)
+    return create_response(data, 404, message)
+
+@app.route('/recipes', methods=['GET'])
+def getAllRecipes():
+  success = False
+  recipes = []
+  message = ""
+  (success, recipes, message) = cookbook.getAllRecipes()
+  if success:
+    return create_response(recipes, 200, message)
+  else:
+    return create_response(recipes, 404, message)
   
 @app.route('/addrecipe', methods=['POST'])
 @authentication_required
