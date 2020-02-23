@@ -6,6 +6,15 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+def create_response(data: dict = None, status: int = 200, message: str = ""):
+    response = {
+        "code": status,
+        "success": 200 <= status < 300,
+        "message": message,
+        "result": data,
+    }
+    return jsonify(response)
+
 def authentication_required(f):
   @wraps(f)
   def authenticate(*args, **kwargs): 
@@ -18,16 +27,6 @@ def authentication_required(f):
     else:
       return create_response({}, 401, "Authentication needed")
   return authenticate
-
-
-def create_response(data: dict = None, status: int = 200, message: str = ""):
-    response = {
-        "code": status,
-        "success": 200 <= status < 300,
-        "message": message,
-        "result": data,
-    }
-    return jsonify(response)
 
 @app.route('/')
 @app.route('/recipes', methods=['GET'])
