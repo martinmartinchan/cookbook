@@ -55,7 +55,7 @@ def checkIngredientValidity(ingredient):
 
 def addIngredient(cursor, name):
   ''' Adds an ingredient to the ingredients table. Dont check if it is duplicated. It does not matter.
-  Called by addRecipe.
+      Called by addRecipe.
   '''
   sql = "INSERT INTO ingredients (ingredient_name) VALUES (%s)"
   val = (name,)
@@ -199,6 +199,3 @@ def editRecipe(oldRecipeName, newRecipe):
         return (False, "Something went terribly wrong. Could not edit the recipe and it was instead removed... Message: " + messageAddOld)
   else:
     return (False, "Could edit the recipe you are looking for. Message: " + messageRemoveOld)
-
-if __name__ == '__main__':
-  print(pwManager.hash('Troglodon5986'))
