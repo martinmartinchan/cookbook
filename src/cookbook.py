@@ -8,12 +8,12 @@ def connection_needed(f):
   '''
   @wraps(f)
   def dbConnect(*args, **kwargs):
-    config = args[0].config
+    config = args[0].config #Get the current config
     db = mysql.connector.connect(
-    host = config["host"],
-    user = config["user"],
-    passwd = config["passwd"],
-    database = config["database"]
+    host = config["HOST"],
+    user = config["USER"],
+    passwd = config["PASSWORD"],
+    database = config["DATABASE"]
     )
     print(config)
     cursor = db.cursor()

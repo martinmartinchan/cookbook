@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from functools import wraps
 from flask_cors import CORS
-from src import cookbook, config
+from src import cookbook, configurations
 
 def create_response(data: dict = None, status: int = 200, message: str = ""):
       response = {
@@ -27,11 +27,18 @@ def authentication_required(cb):
     return authenticate
   return authenticate_wrapper
 
-def create_app():
+def create_app(config=None):
   app = Flask(__name__)
+  if config is None:
+    app.config.from_object(configurations.ProductionConfig())
+  elif config is "Development":
+	  app.config.from_object(configurations.DevelopmentConfig())
+  elif config is "Testing":
+	  app.config.from_object(configurations.TestConfig())
+
   CORS(app)
 
-  cb = cookbook.Cookbook(config.DevConfig())
+  cb = cookbook.Cookbook(app.config)
   @app.route('/', methods=['GET'])
   def getAllData():
     success = False

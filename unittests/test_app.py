@@ -1,14 +1,7 @@
-def test_get_all_data(client):
-	result = client.get("/")
-	assert result.json['success']
-	assert result.json['code'] == 200
-	assert result.json['result']['recipes']
-
-def test_get_all_recipes(client):
+def test_get_recipes_with_empty_database(client):
 	result = client.get("/recipes")
-	assert result.json['success']
-	assert result.json['code'] == 200
-	assert len(result.json['result'])
+	assert not result.json['success']
+	assert result.json['code'] == 404
 
 def test_add_correct_recipe(client):
 	result = client.post('/addrecipe', json={
@@ -24,6 +17,18 @@ def test_add_correct_recipe(client):
 	})
 	assert result.json['success']
 	assert result.json['code'] == 201
+
+def test_get_all_data(client):
+	result = client.get("/")
+	assert result.json['success']
+	assert result.json['code'] == 200
+	assert result.json['result']['recipes']
+
+def test_get_all_recipes(client):
+	result = client.get("/recipes")
+	assert result.json['success']
+	assert result.json['code'] == 200
+	assert len(result.json['result'])
 
 def test_add_recipe_without_password(client):
 	result = client.post('/addrecipe', json={

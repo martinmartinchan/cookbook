@@ -1,4 +1,5 @@
 import mysql.connector
+from passlib.apps import custom_app_context as pwManager
 
 def initiateDatabase():
   ''' Creates all tables needed for the cookbook
@@ -23,6 +24,9 @@ def initiateDatabase():
   # Creates the recipes_ingredients table linking the number of units of ingredients to each recipe
   # Note that the key pair recipe_id and ingredient_name is NOT unique which means a recipe can have several instances of the same ingredient
   cursor.execute("CREATE TABLE recipes_ingredients (recipe_id INT, ingredient_name VARCHAR(255), unit_name VARCHAR(255), amount INT, FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id), FOREIGN KEY (ingredient_name) REFERENCES ingredients(ingredient_name), FOREIGN KEY (unit_name) REFERENCES units(unit_name))")
+
+  #Creates the passwords table that shall store the passwords
+  cursor.execute("CREATE TABLE passwords (password_hash CHAR(77) UNIQUE)")
 
   cursor.close()
   db.close()
@@ -84,11 +88,15 @@ if __name__ == "__main__":
   host = "localhost",
   user = "root",
   passwd = "Aweki2235zxc",
-  database = "cookbook"
+  database = "testcookbook"
   )
   cursor = db.cursor()
+  
+  sql = "INSERT INTO passwords (password_hash) VALUES (%s)"
+  val = (pwManager.hash("Troglodon5986"),)
+  cursor.execute(sql, val)
 
-  cursor.execute("SHOW TABLES")
+  cursor.execute("SELECT * FROM passwords")
 
   for row in cursor.fetchall():
     print(row)
