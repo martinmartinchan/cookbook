@@ -41,7 +41,7 @@ class Cookbook():
   def checkRecipeValidity(self, recipe):
     ''' Checks whether a given recipe contains a name, description, ingredient list, and servings.
     '''
-    return all (keys in recipe for keys in ("name", "description", "ingredients", "servings"))
+    return all (keys in recipe for keys in ("name", "description", "ingredients", "servings", "instructions"))
 
   @connection_needed
   def checkRecipeNameExists(self, recipeName, cursor):
@@ -90,7 +90,7 @@ class Cookbook():
         Returns a message that describes what has happened.
     '''
     if not self.checkRecipeValidity(recipe):
-      return (False, "Recipe must contain name, description, number of servings, and an ingredient list")
+      return (False, "Recipe must contain name, description, number of servings, ingredient list, and instructions")
     
     #Try to insert values into the recipes table
     recipeName = recipe['name']
@@ -113,6 +113,10 @@ class Cookbook():
       for ing in recipe['ingredients']:
         ingredients.append((recipeID, ing['name'], ing['unit'], ing['amount']))
       cursor.executemany("INSERT INTO recipes_ingredients (recipe_id, ingredient_name, unit_name, amount) VALUES (%s, %s, %s, %s)", (ingredients))
+      instructions = []
+      for instruction in recipe['instructions']:
+        instructions.append((recipeID, instruction['step'], instruction['instruction']))
+      cursor.executemany("INSERT INTO recipes_instructions (recipe_id, step, instruction) VALUES (%s, %s, %s)", (instructions))
       return (True, "Successfully added " + recipeName + " into the cookbook")
     except:
       return (False, "Something went wrong. Could not insert recipe into cookbook")
@@ -129,7 +133,9 @@ class Cookbook():
       cursor.execute("SELECT recipe_id FROM recipes WHERE recipe_name = \'" + recipeName + "\'")
       recipeID = cursor.fetchall()[0][0]
       try:
+        #Must delete ingredients and instructions first as they rely on recipes table with foreign key
         cursor.execute("DELETE FROM recipes_ingredients WHERE recipe_id = " + str(recipeID))
+        cursor.execute("DELETE FROM recipes_instructions WHERE recipe_id = " + str(recipeID))
         cursor.execute("DELETE FROM recipes WHERE recipe_id = " + str(recipeID))
         return (True, removedRecipe, "Succesfully removed " + recipeName + " from the cookbook")
       except:
@@ -156,6 +162,14 @@ class Cookbook():
       for ing in result:
         ingredientList.append({"name": ing[2], "unit": ing[3], "amount": ing[4]})
       recipe['ingredients'] = ingredientList
+
+      #Retrieve the instructions 
+      cursor.execute("SELECT step, instruction FROM recipes_instructions INNER JOIN recipes ON recipes_instructions.recipe_id = recipes.recipe_id WHERE recipe_name = \'" + recipeName + "\'")
+      result = cursor.fetchall()
+      instructionList = []
+      for instruction in result:
+        instructionList.append({"step": instruction[0], "instruction": instruction[1]})
+      recipe['instructions'] = instructionList
       return recipe
     else:
       return {}
@@ -187,7 +201,7 @@ class Cookbook():
       return (False, "Recipe with name " + oldRecipeName + " does not exist in the cookbook")
     
     if not self.checkRecipeValidity(newRecipe):
-      return (False, "The edited recipe must contain name, description, number of servings, and an ingredient list")
+      return (False, "Recipe must contain name, description, number of servings, ingredient list, and instructions")
 
     if (newRecipe['name'].lower() != oldRecipeName.lower()) and (checkRecipeNameExists(newRecipe['name'])):
       return (False, "The edited recipe name already exists in the cookbook")
