@@ -178,7 +178,7 @@ class Cookbook():
       return(False, [], "There are no recipes in the cookbook.")
 
   @connection_needed
-  def editRecipe(self, cursor, oldRecipeName, newRecipe):
+  def editRecipe(self, oldRecipeName, newRecipe, cursor):
     ''' Overwrites all the information in a recipe given the recipe name
         Returns True if the recipe was edited, else False
         Returns what has happened during the editing of the recipe
@@ -186,7 +186,7 @@ class Cookbook():
     if not self.checkRecipeNameExists(oldRecipeName):
       return (False, "Recipe with name " + oldRecipeName + " does not exist in the cookbook")
     
-    if not self.checkRecipeValidity(self, newRecipe):
+    if not self.checkRecipeValidity(newRecipe):
       return (False, "The edited recipe must contain name, description, number of servings, and an ingredient list")
 
     if (newRecipe['name'].lower() != oldRecipeName.lower()) and (checkRecipeNameExists(newRecipe['name'])):

@@ -44,6 +44,24 @@ def test_add_recipe_without_password(client):
 	assert not result.json['success']
 	assert result.json['code'] == 401
 
+def test_edit_recipe(client):
+	result = client.put('/editrecipe', json={
+		'password': 'Troglodon5986',
+		'name': 'testrecipe',
+		'recipe': {
+			'name': 'testrecipe',
+			'servings': 2,
+			'description': 'This is the edited test recipe',
+			'ingredients': [
+				{'name': 'testIngredient',
+				'amount': 1,
+				'unit': 'dl'}
+			]
+		}
+	})
+	assert result.json['success']
+	assert result.json['code'] == 200
+
 def test_remove_recipe(client):
 	result = client.put('/removerecipe', json={
 	'password': 'Troglodon5986',
