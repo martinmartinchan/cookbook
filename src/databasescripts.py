@@ -1,17 +1,10 @@
 import mysql.connector
 from passlib.apps import custom_app_context as pwManager
+from src import configurations
 
-def initiateDatabase():
+def initiateDatabase(cursor):
   ''' Creates all tables needed for the cookbook
   '''
-  db = mysql.connector.connect(
-    host = "localhost",
-    user = "root",
-    passwd = "Aweki2235zxc",
-    database = "cookbook"
-  )
-  cursor = db.cursor()
-
   # Creates the recipes table containing the recipe ID, recipe name, recipe description, and number of servings
   cursor.execute("CREATE TABLE recipes (recipe_id INT AUTO_INCREMENT, recipe_name VARCHAR(255), recipe_description TEXT, servings INT, PRIMARY KEY(recipe_id))")
 
@@ -28,78 +21,46 @@ def initiateDatabase():
   #Creates the passwords table that shall store the passwords
   cursor.execute("CREATE TABLE passwords (password_hash CHAR(77) UNIQUE)")
 
-  cursor.close()
-  db.close()
-
-def resetDatabase():
-  ''' Resets everything in the database, erasing all recipes and all ingredients and units the cookbook knows about
+def resetDatabase(cursor):
+  ''' Resets the database removing all recipes, ingredients, passwords
   '''
-  db = mysql.connector.connect(
-  host = "localhost",
-  user = "root",
-  passwd = "Aweki2235zxc",
-  database = "cookbook"
-  )
-  cursor = db.cursor()
-
   # Disable check for foreign keys as resetting recipes_ingredients wont go through otherwise
   cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
-
   cursor.execute("TRUNCATE recipes_ingredients")
-
   cursor.execute("TRUNCATE recipes")
-
   cursor.execute("TRUNCATE ingredients")
-
   cursor.execute("TRUNCATE units")
-
-  # Enable check for foreign keys again
+  cursor.execute("TRUNCATE passwords")
   cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
-  cursor.close()
-  db.close()
-
-def resetRecipesOnly():
+def resetRecipesOnly(cursor):
   ''' Resets only the recipes and recipes_ingredients table. Keep the information in ingredients and units table
   '''
-  db = mysql.connector.connect(
-  host = "localhost",
-  user = "root",
-  passwd = "Aweki2235zxc",
-  database = "cookbook"
-  )
-  cursor = db.cursor()
-
   # Disable check for foreign keys as resetting recipes_ingredients wont go through otherwise
   cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
-
   cursor.execute("TRUNCATE recipes_ingredients")
-
   cursor.execute("TRUNCATE recipes")
-
-  # Enable check for foreign keys again
   cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
-  cursor.close()
-  db.close()
-
-if __name__ == "__main__":
-  db = mysql.connector.connect(
-  host = "localhost",
-  user = "root",
-  passwd = "Aweki2235zxc",
-  database = "testcookbook"
-  )
-  cursor = db.cursor()
-  
+def addPassword(cursor, password):
+  ''' Adds a password to the database
+  '''
   sql = "INSERT INTO passwords (password_hash) VALUES (%s)"
-  val = (pwManager.hash("Troglodon5986"),)
+  val = (pwManager.hash(password),)
   cursor.execute(sql, val)
 
-  cursor.execute("SELECT * FROM passwords")
-
-  for row in cursor.fetchall():
-    print(row)
-
+if __name__ == "__main__":
+  ''' This script is only run manually. Choose the function from above.
+  '''
+  config = configurations.DevelopmentConfig()
+  db = mysql.connector.connect(
+    host = config["HOST"],
+    user = config["USER"],
+    passwd = config["PASSWORD"],
+    database = config["DATABASE"]
+    )
+  cursor = db.cursor()
+  
+  db.commit()
   cursor.close()
   db.close()
