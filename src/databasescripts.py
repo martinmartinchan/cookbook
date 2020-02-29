@@ -60,22 +60,11 @@ if __name__ == "__main__":
     host = "localhost",
     user = "root",
     passwd = "Aweki2235zxc",
-    database = "cookbook"
+    database = "testcookbook"
     )
   cursor = db.cursor()
 
-  '''
-  recipe_id = 1
-  step = 1
-  instruction = "Just do it. This is simple"
-  sql = "INSERT INTO recipes_instructions (recipe_id, step, instruction) VALUES (%s, %s, %s)"
-  val = (recipe_id, step, instruction)
-  cursor.execute(sql, val)'''
-
-  cursor.execute("SELECT * FROM recipes_instructions")
-
-  for row in cursor.fetchall():
-    print(row)
+  resetRecipesOnly(cursor)
 
   db.commit()
   cursor.close()

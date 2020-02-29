@@ -13,6 +13,10 @@ def test_add_correct_recipe(client):
 			{'name': 'testIngredient',
 			'amount': 1,
 			'unit': 'dl'}
+		],
+		'instructions': [
+			{'step': 1,
+			'instruction': 'This is just a test, nothing to really do'}
 		]
 	})
 	assert result.json['success']
@@ -39,6 +43,10 @@ def test_add_recipe_without_password(client):
 			{'name': 'testIngredient',
 			'amount': 1,
 			'unit': 'dl'}
+		],
+		'instructions': [
+			{'step': 1,
+			'instruction': 'This is again just a test, nothing to really do'}
 		]
 	})
 	assert not result.json['success']
@@ -56,7 +64,11 @@ def test_edit_recipe(client):
 				{'name': 'testIngredient',
 				'amount': 1,
 				'unit': 'dl'}
-			]
+			],
+			'instructions': [
+			{'step': 1,
+			'instruction': 'This is still just a test, nothing to really do'}
+		]
 		}
 	})
 	assert result.json['success']
