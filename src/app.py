@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from functools import wraps
 from flask_cors import CORS
-from src import cookbook, configurations
+import cookbook, configurations
 
 def create_response(data: dict = None, status: int = 200, message: str = ""):
       response = {
