@@ -203,7 +203,7 @@ class Cookbook():
     if not self.checkRecipeValidity(newRecipe):
       return (False, "Recipe must contain name, description, number of servings, ingredient list, and instructions")
 
-    if (newRecipe['name'].lower() != oldRecipeName.lower()) and (checkRecipeNameExists(newRecipe['name'])):
+    if (newRecipe['name'].lower() != oldRecipeName.lower()) and (self.checkRecipeNameExists(newRecipe['name'])):
       return (False, "The edited recipe name already exists in the cookbook")
     
     (success, removedRecipe, messageRemoveOld) = self.removeRecipeByName(oldRecipeName)

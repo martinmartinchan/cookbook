@@ -1,5 +1,7 @@
 import pytest
-from src import app
+import sys
+sys.path.append('./src')
+import app
 
 @pytest.fixture("session")
 def client():

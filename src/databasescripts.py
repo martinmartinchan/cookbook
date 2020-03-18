@@ -66,6 +66,11 @@ if __name__ == "__main__":
 
   resetRecipesOnly(cursor)
 
+  '''
+  data = cursor.fetchall()
+  print(data)
+  '''
+
   db.commit()
   cursor.close()
   db.close()

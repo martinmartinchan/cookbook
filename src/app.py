@@ -4,13 +4,13 @@ from flask_cors import CORS
 import cookbook, configurations
 
 def create_response(data: dict = None, status: int = 200, message: str = ""):
-      response = {
-          "code": status,
-          "success": 200 <= status < 300,
-          "message": message,
-          "result": data,
-      }
-      return jsonify(response)
+  response = {
+      "code": status,
+      "success": 200 <= status < 300,
+      "message": message,
+      "result": data,
+  }
+  return jsonify(response)
 
 def authentication_required(cb):
   def authenticate_wrapper(f):
@@ -18,7 +18,7 @@ def authentication_required(cb):
     def authenticate(*args, **kwargs): 
       if 'password' in request.get_json():
         password = request.get_json()['password']
-        if True:
+        if cb.authenticate(password):
           return f(*args, **kwargs)
         else:
           return create_response({}, 401, "Password is incorrect")
