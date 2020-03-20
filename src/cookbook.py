@@ -10,17 +10,18 @@ def connection_needed(f):
   def dbConnect(*args, **kwargs):
     config = args[0].config #Get the current config
     db = mysql.connector.connect(
-    host = config["HOST"],
-    user = config["USER"],
-    passwd = config["PASSWORD"],
-    database = config["DATABASE"]
+      host = config["HOST"],
+      user = config["USER"],
+      passwd = config["PASSWORD"],
+      database = config["DATABASE"]
     )
-    print(config)
     cursor = db.cursor()
-    fReturn = f(*args, cursor)
-    db.commit()
-    cursor.close()
-    db.close()
+    try:
+      fReturn = f(*args, cursor)
+      db.commit()
+    finally:
+      cursor.close()
+      db.close()
     return fReturn
   return dbConnect
 
