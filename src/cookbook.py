@@ -60,30 +60,6 @@ class Cookbook():
     '''
     return all (keys in ingredient for keys in ("name", "unit", "amount"))
 
-  def addIngredient(self, cursor, name):
-    ''' Adds an ingredient to the ingredients table. Dont check if it is duplicated. It does not matter.
-        Called by addRecipe.
-    '''
-    sql = "INSERT INTO ingredients (ingredient_name) VALUES (%s)"
-    val = (name,)
-    try:
-      cursor.execute(sql, val)
-    except:
-      #Do nothing if it fails (probably due to duplicate entries)
-      return
-
-  def addUnit(self, cursor, name):
-    ''' Adds a unit to the units table. Dont check if it is duplicated. It does not matter.
-    Called by addRecipe.
-    '''
-    sql = "INSERT INTO units (unit_name) VALUES (%s)"
-    val = (name,)
-    try:
-      cursor.execute(sql, val)
-    except:
-      #Do nothing if it fails (probably due to duplicate entries)
-      return
-
   @connection_needed
   def addRecipe(self, recipe, cursor):
     ''' Adds a recipe to the cookbook.
@@ -100,12 +76,7 @@ class Cookbook():
 
     description = recipe['description']
     servings = recipe['servings']
-    #First make sure the ingredients exists in the tables (Doesn't matter if this goes wrong)
-    for ing in recipe['ingredients']:
-      if not self.checkIngredientValidity(ing):
-        return (False, "Ingredients must contain name, unit, and amount")
-      self.addIngredient(cursor, ing['name'])
-      self.addUnit(cursor, ing['unit'])
+
     #Then try to insert the recipe and ingredients into the tables
     try:
       cursor.execute("INSERT INTO recipes (recipe_name, recipe_description, servings) VALUES (%s, %s, %s)", (recipeName, description, servings))
@@ -113,7 +84,7 @@ class Cookbook():
       ingredients = []
       for ing in recipe['ingredients']:
         ingredients.append((recipeID, ing['name'], ing['unit'], ing['amount']))
-      cursor.executemany("INSERT INTO recipes_ingredients (recipe_id, ingredient_name, unit_name, amount) VALUES (%s, %s, %s, %s)", (ingredients))
+      cursor.executemany("INSERT INTO recipes_ingredients (recipe_id, ingredient, unit, amount) VALUES (%s, %s, %s, %s)", (ingredients))
       instructions = []
       for instruction in recipe['instructions']:
         instructions.append((recipeID, instruction['step'], instruction['instruction']))
@@ -149,7 +120,7 @@ class Cookbook():
     ''' Searches for a recipe in the cookbook given the recipe name.
         Returns the recipe as a dict if found, else an empty dict is returned.
     '''
-    cursor.execute("SELECT recipe_description, servings, ingredient_name, unit_name, amount  FROM recipes_ingredients INNER JOIN recipes ON recipes_ingredients.recipe_id = recipes.recipe_id WHERE recipe_name = \'" + recipeName + "\'")
+    cursor.execute("SELECT recipe_description, servings, ingredient, unit, amount  FROM recipes_ingredients INNER JOIN recipes ON recipes_ingredients.recipe_id = recipes.recipe_id WHERE recipe_name = \'" + recipeName + "\'")
     result = cursor.fetchall()
     if len(result): #Recipe found
       description = result[0][0]
