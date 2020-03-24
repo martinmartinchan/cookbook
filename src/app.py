@@ -40,17 +40,6 @@ def create_app(config=None):
 
   cb = cookbook.Cookbook(app.config)
   @app.route('/', methods=['GET'])
-  def getAllData():
-    success = False
-    data = {}
-    message = ""
-    (success, recipes, message) = cb.getAllRecipes()
-    if success:
-      data['recipes'] = recipes
-      return create_response(data, 200, message)
-    else:
-      return create_response(data, 404, message)
-
   @app.route('/recipes', methods=['GET'])
   def getAllRecipes():
     success = False

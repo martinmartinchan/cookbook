@@ -22,11 +22,17 @@ def test_add_correct_recipe(client):
 	assert result.json['success']
 	assert result.json['code'] == 201
 
-def test_get_all_data(client):
+def test_get_all_recipes_route1(client):
 	result = client.get("/")
 	assert result.json['success']
 	assert result.json['code'] == 200
-	assert result.json['result']['recipes']
+	assert len(result.json['result']) > 0
+
+def test_get_all_recipes_route2(client):
+	result = client.get("/recipes")
+	assert result.json['success']
+	assert result.json['code'] == 200
+	assert len(result.json['result']) > 0
 
 def test_get_single_recipe(client):
 	result = client.get("/recipe?name=testrecipe")
