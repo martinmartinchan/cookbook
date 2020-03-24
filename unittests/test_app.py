@@ -119,14 +119,14 @@ def test_edit_recipe_to_existing_recipe_name(client):
 	assert not result2.json['success']
 	assert result2.json['code'] == 400
 
-	result3 = client.put('/removerecipe', json={
+	result3 = client.delete('/deleterecipe', json={
 	'password': 'Troglodon5986',
 	'name': 'testrecipe2'
 	})
 	assert result3.json['success']
 
-def test_remove_recipe(client):
-	result = client.put('/removerecipe', json={
+def test_delete_recipe(client):
+	result = client.delete('/deleterecipe', json={
 	'password': 'Troglodon5986',
 	'name': 'testrecipe'
 	})

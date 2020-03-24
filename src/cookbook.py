@@ -93,10 +93,9 @@ class Cookbook():
       return (False, "Something went wrong. Could not insert recipe into cookbook.")
 
   @connection_needed
-  def removeRecipeByName(self, recipeName, cursor):
-    ''' Removes a recipe given the name of the recipe.
-        Returns True if recipe was successfully removed, else False.
-        Returns the removed recipe as a dict if it was removed, else an empty dict.
+  def deleteRecipe(self, recipeName, cursor):
+    ''' Deletes a recipe given the name of the recipe.
+        Returns True if recipe was successfully deleted, else False.
         Returns a message describing what has happened.
     '''
     recipeExists = self.checkRecipeNameExists(recipeName)
@@ -106,9 +105,9 @@ class Cookbook():
         cursor.execute("DELETE FROM recipes_ingredients WHERE recipe_name = \'" + recipeName + "\'")
         cursor.execute("DELETE FROM recipes_instructions WHERE recipe_name = \'" + recipeName + "\'")
         cursor.execute("DELETE FROM recipes WHERE recipe_name = \'" + recipeName + "\'")
-        return (True, "Succesfully removed " + recipeName + " from the cookbook.")
+        return (True, "Succesfully deleted " + recipeName + " from the cookbook.")
       except:
-        return(False, "An error occured. Could not remove " + recipeName + " from the cookbook.")
+        return(False, "An error occured. Could not delete " + recipeName + " from the cookbook.")
     else:
       return (False, "Recipe with name " + recipeName + " does not exist in the cookbook.")
 
@@ -232,13 +231,13 @@ class Cookbook():
     if (newRecipe['name'].lower() != oldRecipeName.lower()) and (self.checkRecipeNameExists(newRecipe['name'])):
       return (False, "The edited recipe name already exists in the cookbook.")
     
-    (success, messageRemoveOld) = self.removeRecipeByName(oldRecipeName)
+    (success, messageDeleteOld) = self.deleteRecipe(oldRecipeName)
     if success:
       (successAddNew, messageAddNew) = self.addRecipe(newRecipe)
       if successAddNew:
         return (True, "Succesfully updated recipe")
       else:
         #This should never happen.
-        return (False, "Something went terribly wrong. Could not edit the recipe and it was instead removed...")
+        return (False, "Something went terribly wrong. Could not edit the recipe and it was instead deleted...")
     else:
-      return (False, "Could not edit the recipe you are looking for. Message: " + messageRemoveOld)
+      return (False, "Could not edit the recipe you are looking for. Message: " + messageDeleteOld)

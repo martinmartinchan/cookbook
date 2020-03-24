@@ -79,21 +79,23 @@ def create_app(config=None):
   def addRecipe():
     (success, message) = cb.addRecipe(request.get_json())
     if success:
-      return create_response({}, 201, message)
+      (successNotUsed, recipes, messageNotUsed) = cb.getAllRecipes()
+      return create_response(recipes, 201, message)
     else:
       return create_response({}, 400, message)
 
-  @app.route('/removerecipe', methods=['PUT'])
+  @app.route('/deleterecipe', methods=['DELETE'])
   @authentication_required(cb)
-  def removeRecipe():
+  def deleteRecipe():
     if 'name' in request.get_json():
-      (success, message) = cb.removeRecipeByName(request.get_json()['name'])
+      (success, message) = cb.deleteRecipe(request.get_json()['name'])
       if success:
-        return create_response({}, 200, message)
+        (successNotUsed, recipes, messageNotUsed) = cb.getAllRecipes()
+        return create_response(recipes, 200, message)
       else:
         return create_response({}, 400, message)
     else:
-      return create_response({}, 400, "Please provide name of the recipe you want to remove")
+      return create_response({}, 400, "Please provide name of the recipe you want to delete")
 
   @app.route('/editrecipe', methods=['PUT'])
   @authentication_required(cb)
@@ -104,7 +106,8 @@ def create_app(config=None):
       return create_response({}, 400, "Please provide new information you want to edit the recipe with")
     (success, message) = cb.editRecipe(request.get_json()['name'], request.get_json()['recipe'])
     if success:
-      return create_response({}, 200, message)
+      (successNotUsed, recipes, messageNotUsed) = cb.getAllRecipes()
+      return create_response(recipes, 200, message)
     else:
       return create_response({}, 400, message)
 
