@@ -77,21 +77,20 @@ class Cookbook():
     description = recipe['description']
     servings = recipe['servings']
 
-    #Then try to insert the recipe and ingredients into the tables
+    #Then try to insert the recipe, ingredients and instructions into the tables
     try:
       cursor.execute("INSERT INTO recipes (recipe_name, recipe_description, servings) VALUES (%s, %s, %s)", (recipeName, description, servings))
-      recipeID = cursor.lastrowid
       ingredients = []
       for ing in recipe['ingredients']:
-        ingredients.append((recipeID, ing['name'], ing['unit'], ing['amount']))
-      cursor.executemany("INSERT INTO recipes_ingredients (recipe_id, ingredient, unit, amount) VALUES (%s, %s, %s, %s)", (ingredients))
+        ingredients.append((recipeName, ing['name'], ing['unit'], ing['amount']))
+      cursor.executemany("INSERT INTO recipes_ingredients (recipe_name, ingredient, unit, amount) VALUES (%s, %s, %s, %s)", (ingredients))
       instructions = []
       for instruction in recipe['instructions']:
-        instructions.append((recipeID, instruction['step'], instruction['instruction']))
-      cursor.executemany("INSERT INTO recipes_instructions (recipe_id, step, instruction) VALUES (%s, %s, %s)", (instructions))
-      return (True, "Successfully added " + recipeName + " into the cookbook")
+        instructions.append((recipeName, instruction['step'], instruction['instruction']))
+      cursor.executemany("INSERT INTO recipes_instructions (recipe_name, step, instruction) VALUES (%s, %s, %s)", (instructions))
+      return (True, "Successfully added " + recipeName + " into the cookbook.")
     except:
-      return (False, "Something went wrong. Could not insert recipe into cookbook")
+      return (False, "Something went wrong. Could not insert recipe into cookbook.")
 
   @connection_needed
   def removeRecipeByName(self, recipeName, cursor):
@@ -100,51 +99,65 @@ class Cookbook():
         Returns the removed recipe as a dict if it was removed, else an empty dict.
         Returns a message describing what has happened.
     '''
-    removedRecipe = self.getRecipeByName(recipeName)
-    if removedRecipe:
-      cursor.execute("SELECT recipe_id FROM recipes WHERE recipe_name = \'" + recipeName + "\'")
-      recipeID = cursor.fetchall()[0][0]
+    recipeExists = self.checkRecipeNameExists(recipeName)
+    if recipeExists:
       try:
         #Must delete ingredients and instructions first as they rely on recipes table with foreign key
-        cursor.execute("DELETE FROM recipes_ingredients WHERE recipe_id = " + str(recipeID))
-        cursor.execute("DELETE FROM recipes_instructions WHERE recipe_id = " + str(recipeID))
-        cursor.execute("DELETE FROM recipes WHERE recipe_id = " + str(recipeID))
-        return (True, removedRecipe, "Succesfully removed " + recipeName + " from the cookbook")
+        cursor.execute("DELETE FROM recipes_ingredients WHERE recipe_name = \'" + recipeName + "\'")
+        cursor.execute("DELETE FROM recipes_instructions WHERE recipe_name = \'" + recipeName + "\'")
+        cursor.execute("DELETE FROM recipes WHERE recipe_name = \'" + recipeName + "\'")
+        return (True, "Succesfully removed " + recipeName + " from the cookbook.")
       except:
-        return(False, {}, "An error occured. Could not remove " + recipeName + " from the cookbook")
+        return(False, "An error occured. Could not remove " + recipeName + " from the cookbook.")
     else:
-      return (False, {}, "Recipe with name " + recipeName + " does not exist in the cookbook")
+      return (False, "Recipe with name " + recipeName + " does not exist in the cookbook.")
 
   @connection_needed
   def getRecipeByName(self, recipeName, cursor):
     ''' Searches for a recipe in the cookbook given the recipe name.
+        Returns True if at least one recipe was found, else False
         Returns the recipe as a dict if found, else an empty dict is returned.
+        Returns a message describing what has happened
     '''
-    cursor.execute("SELECT recipe_description, servings, ingredient, unit, amount  FROM recipes_ingredients INNER JOIN recipes ON recipes_ingredients.recipe_id = recipes.recipe_id WHERE recipe_name = \'" + recipeName + "\'")
-    result = cursor.fetchall()
-    if len(result): #Recipe found
-      description = result[0][0]
-      servings = result[0][1]
-      recipe = {
-        'name': recipeName,
-        'description': description,
-        'servings': servings
-        }
-      ingredientList = []
-      for ing in result:
-        ingredientList.append({"name": ing[2], "unit": ing[3], "amount": ing[4]})
-      recipe['ingredients'] = ingredientList
+    if self.checkRecipeNameExists(recipeName):
+      try:
+        #Fetch everything from the recipes, recipe_ingredients, recipe_instructions tables with recipe name matching the input parameter
+        cursor.execute("SELECT recipe_name, recipe_description, servings FROM recipes WHERE recipe_name = \'" + recipeName + "\'")
+        recipesResult = cursor.fetchall()[0]
+        cursor.execute("SELECT ingredient, unit, amount FROM recipes_ingredients WHERE recipe_name = \'" + recipeName + "\'")
+        ingredientsResult = cursor.fetchall()
+        cursor.execute("SELECT step, instruction FROM recipes_instructions WHERE recipe_name = \'" + recipeName + "\' ORDER BY step ASC")
+        instructionsResult = cursor.fetchall()
 
-      #Retrieve the instructions 
-      cursor.execute("SELECT step, instruction FROM recipes_instructions INNER JOIN recipes ON recipes_instructions.recipe_id = recipes.recipe_id WHERE recipe_name = \'" + recipeName + "\'")
-      result = cursor.fetchall()
-      instructionList = []
-      for instruction in result:
-        instructionList.append({"step": instruction[0], "instruction": instruction[1]})
-      recipe['instructions'] = instructionList
-      return recipe
+        #Build the recipe to return
+        recipe = {}
+        recipe['name'] = recipesResult[0]
+        recipe['description'] = recipesResult[1]
+        recipe['servings'] = recipesResult[2]
+        recipe['ingredients'] = []
+        recipe['instructions'] = []
+
+        for ing in ingredientsResult:
+          newIngredient = {
+            'name': ing[0],
+            'unit': ing[1],
+            'amount': ing[2]
+          }
+          recipe['ingredients'].append(newIngredient)
+
+        for inst in instructionsResult:
+          newInstruction = {
+            'step': inst[0],
+            'instruction': inst[1]
+          }
+          recipe['instructions'].append(newInstruction)
+        
+        return(True, recipe, "Successfully retrieved recipe with name " + recipeName + " from the cookbook.")
+      except:
+        return(False, {}, "Could not connect to the database.")
     else:
-      return {}
+      return (False, {}, "Could not found recipe with name " + recipeName + " in the cookbook.")
+    
 
   @connection_needed
   def getAllRecipes(self, cursor):
@@ -153,15 +166,56 @@ class Cookbook():
         Returns an array containing all recipes (This is empty is none was found)
         Returns a message describing what has happened
     '''
-    cursor.execute("SELECT * FROM recipes")
-    result = cursor.fetchall()
-    if len(result):
+    try:
+      #Fetch everything from the recipes, recipe_ingredients, recipe_instructions tables
+      cursor.execute("SELECT recipe_name, recipe_description, servings FROM recipes")
+      recipesResult = cursor.fetchall()
+      cursor.execute("SELECT recipe_name, ingredient, unit, amount FROM recipes_ingredients")
+      ingredientsResult = cursor.fetchall()
+      cursor.execute("SELECT recipe_name, step, instruction FROM recipes_instructions ORDER BY step ASC")
+      instructionsResult = cursor.fetchall()
+
+      #Initiate recipes as a dict to store the recipes
+      recipesDict = {}
+
+      #Create the recipes in the dictionary using recipesResult with tuples = (recipe_name, recipe_description, servings)
+      for recipe in recipesResult:
+        newRecipe = {}
+        newRecipe['name'] = recipe[0]
+        newRecipe['description'] = recipe[1]
+        newRecipe['servings'] = recipe[2]
+        newRecipe['ingredients'] = []
+        newRecipe['instructions'] = []
+        recipesDict[newRecipe['name']] = newRecipe
+      
+      #Input the ingredients to the recipes using ingredientsResult with tuples (recipe_name, ingredient, unit, amount)
+      for ing in ingredientsResult:
+        newIngredient = {
+          'name': ing[1],
+          'unit': ing[2],
+          'amount': ing[3]
+        }
+        recipesDict[ing[0]]['ingredients'].append(newIngredient)
+
+      #Input the instructions to the recipes using instructionsResult with tuples (recipe_name, step, instruction)
+      for inst in instructionsResult:
+        newInstruction = {
+          'step': inst[1],
+          'instruction': inst[2]
+        }
+        recipesDict[ing[0]]['instructions'].append(newInstruction)
+      
+      #Convert the recipes struct to a list
       recipes = []
-      for recipe in result:
-        recipes.append(self.getRecipeByName(recipe[1]))
-      return (True, recipes, "Successfully retrieved all recipes.")
-    else:
-      return(False, [], "There are no recipes in the cookbook.")
+      for recipe in recipesDict:
+        recipes.append(recipesDict[recipe])
+      
+      if len(recipes):
+        return (True, recipes, "Successfully retrieved all recipes.")
+      else:
+        return(False, [], "There are no recipes in the cookbook.")
+    except:
+      return(False, [], "Could not connect to the database.")
 
   @connection_needed
   def editRecipe(self, oldRecipeName, newRecipe, cursor):
@@ -170,25 +224,21 @@ class Cookbook():
         Returns what has happened during the editing of the recipe
     '''
     if not self.checkRecipeNameExists(oldRecipeName):
-      return (False, "Recipe with name " + oldRecipeName + " does not exist in the cookbook")
+      return (False, "Recipe with name " + oldRecipeName + " does not exist in the cookbook.")
     
     if not self.checkRecipeValidity(newRecipe):
-      return (False, "Recipe must contain name, description, number of servings, ingredient list, and instructions")
+      return (False, "Recipe must contain name, description, number of servings, ingredient list, and instructions.")
 
     if (newRecipe['name'].lower() != oldRecipeName.lower()) and (self.checkRecipeNameExists(newRecipe['name'])):
-      return (False, "The edited recipe name already exists in the cookbook")
+      return (False, "The edited recipe name already exists in the cookbook.")
     
-    (success, removedRecipe, messageRemoveOld) = self.removeRecipeByName(oldRecipeName)
+    (success, messageRemoveOld) = self.removeRecipeByName(oldRecipeName)
     if success:
       (successAddNew, messageAddNew) = self.addRecipe(newRecipe)
       if successAddNew:
         return (True, "Succesfully updated recipe")
       else:
-        (successAddOld, messageAddOld) = self.addRecipe(removedRecipe)
-        if successAddOld:
-          return (False, "The new information in the new recipe is not good. See following message: " + messageAddNew)
-        else:
-          #This is when the old recipe is removed, and new couldn't be added and then old couldnt be added either. Critical error. Should never happen
-          return (False, "Something went terribly wrong. Could not edit the recipe and it was instead removed... Message: " + messageAddOld)
+        #This should never happen.
+        return (False, "Something went terribly wrong. Could not edit the recipe and it was instead removed...")
     else:
-      return (False, "Could edit the recipe you are looking for. Message: " + messageRemoveOld)
+      return (False, "Could not edit the recipe you are looking for. Message: " + messageRemoveOld)

@@ -62,6 +62,18 @@ def create_app(config=None):
     else:
       return create_response(recipes, 404, message)
     
+  @app.route('/recipe')
+  def getRecipeByName():
+    recipeName = request.args.get('name', default = "", type = str)
+    if recipeName == "":
+      return create_response({}, 404, "No recipe name given")
+    else:
+      (success, recipe, message) = cb.getRecipeByName(recipeName)
+      if success:
+        return create_response(recipe, 200, message)
+      else:
+        return create_response({}, 404, message)
+
   @app.route('/addrecipe', methods=['POST'])
   @authentication_required(cb)
   def addRecipe():
@@ -75,9 +87,9 @@ def create_app(config=None):
   @authentication_required(cb)
   def removeRecipe():
     if 'name' in request.get_json():
-      (success, removedRecipe, message) = cb.removeRecipeByName(request.get_json()['name'])
+      (success, message) = cb.removeRecipeByName(request.get_json()['name'])
       if success:
-        return create_response(removedRecipe, 200, message)
+        return create_response({}, 200, message)
       else:
         return create_response({}, 400, message)
     else:

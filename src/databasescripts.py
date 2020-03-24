@@ -4,16 +4,16 @@ from passlib.apps import custom_app_context as pwManager
 def initiateDatabase(cursor):
   ''' Creates all tables needed for the cookbook
   '''
-  # Creates the recipes table containing the recipe ID, recipe name, recipe description, and number of servings
-  cursor.execute("CREATE TABLE recipes (recipe_id INT AUTO_INCREMENT, recipe_name VARCHAR(255), recipe_description TEXT, servings INT, PRIMARY KEY(recipe_id))")
+  # Creates the recipes table containing the recipe name, recipe description, and number of servings
+  cursor.execute("CREATE TABLE recipes (recipe_name VARCHAR(255), recipe_description TEXT, servings INT, PRIMARY KEY(recipe_name))")
 
   # Creates the recipes_ingredients table linking the number of units of ingredients to each recipe
   # Note that the key pair recipe_id and ingredient is NOT unique which means a recipe can have several instances of the same ingredient
   # Amount is chosen to be VARCHAR as one can have 1/2 or "a million" as value there.
-  cursor.execute("CREATE TABLE recipes_ingredients (recipe_id INT, ingredient VARCHAR(255), unit VARCHAR(255), amount VARCHAR(255), FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id))")
+  cursor.execute("CREATE TABLE recipes_ingredients (recipe_name VARCHAR(255), ingredient VARCHAR(255), unit VARCHAR(255), amount VARCHAR(255), FOREIGN KEY (recipe_name) REFERENCES recipes(recipe_name))")
 
   # Creates the recipes_instructions table linking the instructions and step to each recipe
-  cursor.execute("CREATE TABLE recipes_instructions (recipe_id INT, step INT, instruction TEXT, FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id), UNIQUE KEY recipe_to_step (recipe_id, step))")
+  cursor.execute("CREATE TABLE recipes_instructions (recipe_name VARCHAR(255), step INT, instruction TEXT, FOREIGN KEY (recipe_name) REFERENCES recipes(recipe_name), UNIQUE KEY recipe_to_step (recipe_name, step))")
 
   #Creates the passwords table that shall store the passwords
   cursor.execute("CREATE TABLE passwords (password_hash CHAR(77) UNIQUE)")
@@ -57,14 +57,13 @@ if __name__ == "__main__":
     )
   cursor = db.cursor()
 
-  cursor.execute("CREATE TABLE recipes_ingredients (recipe_id INT, ingredient VARCHAR(255), unit VARCHAR(255), amount VARCHAR(255), FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id))")
-
-  #cursor.execute("DROP TABLE recipes_ingredients")
+  resetRecipesOnly(cursor)
+  '''
   cursor.execute("SHOW TABLES")
   
   data = cursor.fetchall()
   print(data)
-  
+  '''
 
   db.commit()
   cursor.close()
