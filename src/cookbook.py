@@ -202,7 +202,7 @@ class Cookbook():
           'step': inst[1],
           'instruction': inst[2]
         }
-        recipesDict[ing[0]]['instructions'].append(newInstruction)
+        recipesDict[inst[0]]['instructions'].append(newInstruction)
       
       #Convert the recipes struct to a list
       recipes = []
